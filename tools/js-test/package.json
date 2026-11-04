@@ -1,0 +1,7 @@
+{
+  "name": "brwsr-js-test",
+  "private": true,
+  "description": "Headless-Chromium tests for brwsr's injected scripts",
+  "scripts": { "test": "node injected-scripts.test.js" },
+  "devDependencies": { "playwright": "1.63.0" }
+}
