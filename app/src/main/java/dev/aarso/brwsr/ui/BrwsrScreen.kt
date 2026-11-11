@@ -61,8 +61,14 @@ fun BrwsrScreen(browser: Browser, actions: ScreenActions) {
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         // The page.
         AndroidView(
-            factory = { ctx -> FrameLayout(ctx) },
+            factory = { ctx -> PinchFrame(ctx) },
             update = { container ->
+                container.canPinch = browser::canPinchToTabs
+                container.onPinchIn = {
+                    collapse()
+                    browser.current?.let(browser::captureThumb)
+                    overlay = Overlay.Tabs
+                }
                 val wv = browser.current?.webView
                 if (wv != null && wv.parent !== container) {
                     (wv.parent as? ViewGroup)?.removeView(wv)

@@ -94,6 +94,8 @@ class TopSites(context: Context, private val scope: CoroutineScope) {
         scheduleSave()
     }
 
+    fun hasThumb(host: String) = thumbs.containsKey(host) || File(thumbDir, "$host.webp").exists()
+
     fun saveThumb(host: String, bitmap: Bitmap) {
         thumbs[host] = bitmap.asImageBitmap()
         scope.launch(Dispatchers.IO) {

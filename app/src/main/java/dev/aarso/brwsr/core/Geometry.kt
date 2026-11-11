@@ -120,3 +120,28 @@ object PuckLayout {
         }
     }
 }
+
+/**
+ * Pinch-in recogniser for "show all tabs". Feed it the distance between two fingers; it fires
+ * once per gesture, when they have closed to [threshold] of where they started. Pure maths so
+ * the feel can be tested without a device.
+ */
+class PinchIn(private val threshold: Float = 0.72f, private val minStart: Float = 120f) {
+    private var start = 0f
+    private var fired = false
+
+    /** Second finger went down [distance] px from the first. Pass armed=false to ignore this gesture. */
+    fun begin(distance: Float, armed: Boolean = true) {
+        start = if (armed && distance >= minStart) distance else 0f
+        fired = false
+    }
+
+    fun cancel() { start = 0f; fired = false }
+
+    /** Returns true exactly once, the moment the pinch has closed far enough. */
+    fun update(distance: Float): Boolean {
+        if (start <= 0f || fired) return false
+        if (distance / start <= threshold) { fired = true; return true }
+        return false
+    }
+}

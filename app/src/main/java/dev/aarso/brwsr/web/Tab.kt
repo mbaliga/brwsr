@@ -33,6 +33,9 @@ class Tab(val id: Long, webView: WebView) {
     @Volatile var pageHost: String? = null
     @Volatile var adblockActive: Boolean = true
 
+    /** Smallest zoom the page has had since it loaded; a pinch-in at that zoom means "show tabs". */
+    var minScale: Float = Float.MAX_VALUE
+
     internal var pageScript: ScriptHandler? = null
     internal var desktopScript: ScriptHandler? = null
     internal var lastRecorded: String? = null
