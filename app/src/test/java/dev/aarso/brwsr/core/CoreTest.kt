@@ -72,4 +72,21 @@ class CoreTest {
         assertTrue(abs(Wall.carouselAngle(0, 4, 0f)) < 0.001f)
         assertEquals(90f, Wall.carouselAngle(1, 4, 0f), 0.001f)
     }
+
+    @Test fun pinchInFiresOnceWhenClosed() {
+        val p = PinchIn()
+        p.begin(400f)
+        assertTrue(!p.update(380f))
+        assertTrue(!p.update(300f))     // 75% — not far enough
+        assertTrue(p.update(280f))      // 70%
+        assertTrue(!p.update(100f))     // already fired this gesture
+        p.begin(400f); assertTrue(p.update(200f)) // a new gesture can fire again
+    }
+
+    @Test fun pinchInIgnoresSpreadAndUnarmedAndTinyStarts() {
+        val p = PinchIn()
+        p.begin(300f); assertTrue(!p.update(600f))           // pinch OUT never fires
+        p.begin(300f, armed = false); assertTrue(!p.update(50f)) // zoomed in: the page owns the pinch
+        p.begin(60f); assertTrue(!p.update(10f))             // fingers touching: not a pinch
+    }
 }

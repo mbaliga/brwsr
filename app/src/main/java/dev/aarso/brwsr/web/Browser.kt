@@ -442,6 +442,7 @@ class Browser(
             t.blocked = 0
             t.nakdNow = false
             t.siteCssPushedFor = null
+            t.minScale = Float.MAX_VALUE
             val host = Hosts.hostOf(url)
             if (host != t.pageHost || view.settings.textZoom != rules.of(host).textZoom) applySiteSettings(t, host)
             t.pageHost = host
@@ -463,13 +464,17 @@ class Browser(
                 t.lastRecorded = url
                 topSites.recordVisit(url, view.title)
             }
-            main.postDelayed({ if (current === t && !t.landing && t.progress >= 100) captureThumb(t) }, 900)
+            main.postDelayed({ if (current === t && !t.landing && t.progress >= 100) captureThumb(t) }, 1500)
         }
 
         override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
             t.url = url
             t.canGoBack = view.canGoBack()
             t.canGoForward = view.canGoForward()
+        }
+
+        override fun onScaleChanged(view: WebView, oldScale: Float, newScale: Float) {
+            if (newScale > 0f) t.minScale = minOf(t.minScale, newScale)
         }
 
         override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
@@ -571,9 +576,29 @@ class Browser(
             c.translate(-wv.scrollX.toFloat(), -wv.scrollY.toFloat())
             wv.draw(c)
             t.thumb = bmp.asImageBitmap()
-            // Only the top of a site belongs on the wall, not wherever the user scrolled to.
-            if (wv.scrollY < 40) t.pageHost?.let { topSites.saveThumb(it, bmp) }
+            // The wall shows sites, not search results: a site's home page always updates its
+            // card, any other page only fills it in while it has none. And only the top of the
+            // page, never wherever the user scrolled to.
+            val host = t.pageHost
+            if (wv.scrollY < 40 && host != null && (isHomePage(t.url) || !topSites.hasThumb(host))) {
+                topSites.saveThumb(host, bmp)
+            }
         }
+    }
+
+    /** True when a pinch-in on this page should open the tab overview rather than zoom it. */
+    fun canPinchToTabs(): Boolean {
+        val t = current ?: return false
+        if (t.landing || t.url == null) return false
+        @Suppress("DEPRECATION")
+        val scale = t.webView.scale
+        // Already at (or never moved from) the page's smallest zoom: nothing left to zoom out.
+        return t.minScale == Float.MAX_VALUE || scale <= t.minScale * 1.04f
+    }
+
+    private fun isHomePage(url: String?): Boolean {
+        val u = url?.let(Uri::parse) ?: return false
+        return u.query == null && (u.path.isNullOrEmpty() || u.path == "/")
     }
 
     fun destroy() {
