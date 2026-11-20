@@ -49,6 +49,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.aarso.brwsr.core.WallDensity
 import dev.aarso.brwsr.core.Corner
 import dev.aarso.brwsr.core.SearchEngine
 import dev.aarso.brwsr.core.WallStyle
@@ -172,6 +173,21 @@ private fun RemovableRow(text: String, onRemove: () -> Unit) {
     }
 }
 
+/** A millimetre distance, shown in centimetres. */
+@Composable
+private fun MmSlider(label: String, mm: Float, range: ClosedFloatingPointRange<Float>, onChange: (Float) -> Unit) {
+    Column(Modifier.padding(horizontal = 18.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, color = Ink.Text, fontSize = 15.sp)
+            Text("%.1f cm".format(mm / 10f), color = Ink.TextDim, fontSize = 12.sp, fontFamily = Ink.Mono)
+        }
+        Slider(
+            value = mm, onValueChange = onChange, valueRange = range,
+            colors = SliderDefaults.colors(thumbColor = Ink.Accent, activeTrackColor = Ink.Accent, inactiveTrackColor = Ink.Groove),
+        )
+    }
+}
+
 @Composable
 fun SettingsSheet(
     settings: Settings,
@@ -191,9 +207,14 @@ fun SettingsSheet(
             { when (it) { Corner.TopLeft -> "↖"; Corner.TopRight -> "↗"; Corner.BottomLeft -> "↙"; Corner.BottomRight -> "↘" } },
             { settings.orbCorner = it },
         )
+        SectionLabel("Orb distance from the edge")
+        MmSlider("Top and bottom", settings.orbVerticalMm, 5f..30f) { settings.orbVerticalMm = it }
+        MmSlider("Side", settings.orbSideMm, 5f..40f) { settings.orbSideMm = it }
         ToggleRow("Full screen", settings.immersive, detail = "Hide the status and navigation bars") { settings.immersive = it }
 
-        SectionLabel("Landing")
+        SectionLabel("Open pages per row")
+        Segmented((WallDensity.MIN..WallDensity.MAX).toList(), settings.wallCols, { it.toString() }, { settings.wallCols = it })
+        SectionLabel("Landing (no pages open)")
         Segmented(WallStyle.entries, settings.wallStyle, { it.label.substringBefore(' ') }, { settings.wallStyle = it })
 
         SectionLabel("Search")

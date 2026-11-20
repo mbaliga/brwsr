@@ -564,9 +564,9 @@ class Browser(
     }
 
     /** Thumbnail for the wall and the tab switcher: the top of the page, card-shaped. */
-    fun captureThumb(t: Tab) {
+    fun captureThumb(t: Tab, whileLanding: Boolean = false) {
         val wv = t.webView
-        if (t.landing || t.url == null || wv.width <= 0 || wv.height <= 0 || !wv.isAttachedToWindow) return
+        if ((t.landing && !whileLanding) || t.url == null || wv.width <= 0 || wv.height <= 0 || !wv.isAttachedToWindow) return
         runCatching {
             val scale = 360f / wv.width
             val h = minOf(wv.height.toFloat(), wv.width / CARD_ASPECT)

@@ -89,4 +89,31 @@ class CoreTest {
         p.begin(300f, armed = false); assertTrue(!p.update(50f)) // zoomed in: the page owns the pinch
         p.begin(60f); assertTrue(!p.update(10f))             // fingers touching: not a pinch
     }
+
+    @Test fun wallDensityFollowsThePinch() {
+        assertEquals(3, WallDensity.colsFor(3, 1f))
+        assertTrue(WallDensity.colsFor(3, 0.5f) > 3)   // fingers together: denser
+        assertTrue(WallDensity.colsFor(3, 2f) < 3)     // fingers apart: sparser
+        assertEquals(WallDensity.MAX, WallDensity.colsFor(5, 0.1f))
+        assertEquals(WallDensity.MIN, WallDensity.colsFor(2, 10f))
+        assertTrue(WallDensity.refreshMillis(6) > WallDensity.refreshMillis(2))
+    }
+
+    @Test fun orbPullDirectionsAndArming() {
+        assertEquals(PullDir.Left, OrbPull.direction(-30f, 4f))
+        assertEquals(PullDir.Right, OrbPull.direction(30f, -4f))
+        assertEquals(PullDir.Down, OrbPull.direction(3f, 40f))
+        assertEquals(PullDir.Up, OrbPull.direction(3f, -40f))
+        assertTrue(!OrbPull.armed(OrbPull.ARM_DP - 1f, true))
+        assertTrue(OrbPull.armed(OrbPull.ARM_DP, true))
+        assertTrue(!OrbPull.armed(500f, false))
+        assertEquals(OrbPull.MAX_OFFSET_DP, OrbPull.offset(1000f, true), 0.001f)
+        assertEquals(OrbPull.DISABLED_MAX_DP, OrbPull.offset(1000f, false), 0.001f)
+    }
+
+    @Test fun orbMarginsAreMillimetres() {
+        // 1 cm at 254 dpi is exactly 100 px; 2 cm is 200.
+        assertEquals(100f, OrbMargins.mmToPx(OrbMargins.VERTICAL_MM, 254f), 0.01f)
+        assertEquals(200f, OrbMargins.mmToPx(OrbMargins.SIDE_MM, 254f), 0.01f)
+    }
 }

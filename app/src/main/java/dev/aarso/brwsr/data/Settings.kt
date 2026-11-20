@@ -6,6 +6,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import dev.aarso.brwsr.core.Corner
+import dev.aarso.brwsr.core.OrbMargins
+import dev.aarso.brwsr.core.WallDensity
 import dev.aarso.brwsr.core.SearchEngine
 import dev.aarso.brwsr.core.WallStyle
 import kotlin.properties.ReadWriteProperty
@@ -22,6 +24,11 @@ class Settings(context: Context) {
     var wallStyle by enumPref("wallStyle", WallStyle.Curved)
     var searchEngine by enumPref("searchEngine", SearchEngine.DuckDuckGo)
     var immersive by boolPref("immersive", false)
+    /** Orb distance from the edges, in millimetres: 1 cm top/bottom, 2 cm at the side. */
+    var orbSideMm by floatPref("orbSideMm", OrbMargins.SIDE_MM)
+    var orbVerticalMm by floatPref("orbVerticalMm", OrbMargins.VERTICAL_MM)
+    /** Landing wall density (columns of open tabs), changed by pinching the wall. */
+    var wallCols by intPref("wallCols", WallDensity.DEFAULT)
 
     // Blocking — everything on by default.
     var adblock by boolPref("adblock", true)
@@ -47,6 +54,7 @@ class Settings(context: Context) {
     var restoreUrls by stringPref("restoreUrls", "")
 
     private fun boolPref(key: String, def: Boolean) = pref(key, def, { getBoolean(key, def) }, { putBoolean(key, it) })
+    private fun intPref(key: String, def: Int) = pref(key, def, { getInt(key, def) }, { putInt(key, it) })
     private fun longPref(key: String, def: Long) = pref(key, def, { getLong(key, def) }, { putLong(key, it) })
     private fun floatPref(key: String, def: Float) = pref(key, def, { getFloat(key, def) }, { putFloat(key, it) })
     private fun stringPref(key: String, def: String) = pref(key, def, { getString(key, def) ?: def }, { putString(key, it) })

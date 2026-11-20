@@ -70,6 +70,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.input.pointer.PointerEventPass
+import dev.aarso.brwsr.core.WallDensity
 import dev.aarso.brwsr.core.Wall
 import dev.aarso.brwsr.core.WallStyle
 import kotlinx.coroutines.launch
@@ -104,6 +109,8 @@ fun WallView(
     modifier: Modifier = Modifier,
     onClose: ((WallItem) -> Unit)? = null,
     onAdd: (() -> Unit)? = null,
+    cols: Int? = null,
+    onCols: ((Int) -> Unit)? = null,
 ) {
     Box(
         modifier
@@ -125,7 +132,11 @@ fun WallView(
                 )
             },
     ) {
-        when (style) {
+        // A density-controlled wall (the landing, a wall of open tabs) is always the flat,
+        // photo-library grid: pinch to change how many tabs fit.
+        if (cols != null) {
+            GridWall(items, curved = false, onOpen, actions, onClose, cols, onCols)
+        } else when (style) {
             WallStyle.Curved, WallStyle.Flat -> GridWall(items, curved = style == WallStyle.Curved, onOpen, actions, onClose)
             WallStyle.Coverflow -> FlowWall(items, onOpen, actions, onClose, ring = false)
             WallStyle.Carousel -> FlowWall(items, onOpen, actions, onClose, ring = true)
@@ -147,17 +158,49 @@ private fun GridWall(
     onOpen: (WallItem) -> Unit,
     actions: (WallItem) -> List<CardAction>,
     onClose: ((WallItem) -> Unit)?,
+    colsOverride: Int? = null,
+    onCols: ((Int) -> Unit)? = null,
 ) {
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val cols = when {
+    val colsNow by rememberUpdatedState(colsOverride)
+    BoxWithConstraints(
+        Modifier.fillMaxSize().then(
+            if (onCols == null) Modifier else Modifier.pointerInput(onCols) {
+                // Two fingers change the density; one finger still scrolls the grid.
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    var startSpan = 0f
+                    var startCols = 0
+                    do {
+                        val ev = awaitPointerEvent(PointerEventPass.Initial)
+                        val down = ev.changes.filter { it.pressed }
+                        if (down.size >= 2) {
+                            val span = (down[0].position - down[1].position).getDistance()
+                            if (startSpan == 0f) {
+                                startSpan = span
+                                startCols = colsNow ?: WallDensity.DEFAULT
+                            } else if (startSpan > 40f) {
+                                val n = WallDensity.colsFor(startCols, span / startSpan)
+                                if (n != colsNow) onCols(n)
+                            }
+                            ev.changes.forEach { it.consume() }
+                        } else {
+                            startSpan = 0f
+                        }
+                    } while (ev.changes.any { it.pressed })
+                }
+            },
+        ),
+    ) {
+        val cols = colsOverride ?: when {
             maxWidth < 420.dp -> 2
             maxWidth < 720.dp -> 3
             else -> 4
         }.coerceAtMost(maxOf(items.size, 1))
-        val side = 20.dp
-        val gap = if (curved) 4.dp else 14.dp
-        val rowGap = 22.dp
-        val labelH = 28.dp
+        val dense = cols >= 5
+        val side = if (dense) 12.dp else 20.dp
+        val gap = if (curved) 4.dp else if (dense) 8.dp else 14.dp
+        val rowGap = if (dense) 10.dp else 22.dp
+        val labelH = if (dense) 0.dp else 28.dp
         // Centre the wall vertically when it is shorter than the screen (the common case).
         val cardW = (maxWidth - side * 2 - gap * (cols - 1)) / cols
         val rowH = cardW / dev.aarso.brwsr.web.Browser.CARD_ASPECT + labelH
@@ -176,7 +219,7 @@ private fun GridWall(
                 val mid = (cols - 1) / 2f
                 val edge = if (cols <= 1) 0f else kotlin.math.abs(col - mid) / mid // 0 centre … 1 outer
                 Column(
-                    Modifier.graphicsLayer {
+                    Modifier.animateItem().graphicsLayer {
                         if (curved) {
                             rotationY = Wall.curvedYaw(col, cols, maxDeg = 22f)
                             cameraDistance = 12f * density
@@ -189,7 +232,7 @@ private fun GridWall(
                     },
                 ) {
                     Card(item, onOpen, actions, onClose, Modifier.fillMaxWidth())
-                    Text(
+                    if (!dense) Text(
                         item.title, color = Ink.Text.copy(alpha = .78f), fontSize = 12.sp, fontWeight = FontWeight.Medium,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth().padding(top = 9.dp, start = 2.dp, end = 2.dp),

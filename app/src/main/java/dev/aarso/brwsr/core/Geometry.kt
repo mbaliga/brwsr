@@ -145,3 +145,59 @@ class PinchIn(private val threshold: Float = 0.72f, private val minStart: Float 
         return false
     }
 }
+
+/** The landing wall's density: pinch like a photo grid — spread = fewer, bigger tabs. */
+object WallDensity {
+    const val MIN = 1
+    const val MAX = 6
+    const val DEFAULT = 3
+
+    /**
+     * Columns for a pinch that started at [startCols] and has since scaled the finger span by
+     * [zoom] (>1 = fingers apart). The exponent makes a modest pinch cross a step.
+     */
+    fun colsFor(startCols: Int, zoom: Float): Int {
+        if (zoom <= 0f) return startCols.coerceIn(MIN, MAX)
+        return Math.round(startCols / zoom.pow(1.15f)).coerceIn(MIN, MAX)
+    }
+
+    /** How often a visible tab's thumbnail is refreshed: the denser the wall, the lazier. */
+    fun refreshMillis(cols: Int): Long = when {
+        cols <= 2 -> 1_500L
+        cols <= 4 -> 3_000L
+        else -> 6_000L
+    }
+}
+
+/** Pull directions of the orb: left = back, right = forward, down = reload, up = share. */
+enum class PullDir { Left, Right, Down, Up }
+
+/** The orb's pull physics. Distances are in dp so the feel is the same on every screen. */
+object OrbPull {
+    /** Finger travel (dp) at which the pull arms. */
+    const val ARM_DP = 62f
+    /** The orb follows the finger at this fraction, up to [MAX_OFFSET_DP]. */
+    const val FOLLOW = 0.62f
+    const val MAX_OFFSET_DP = 60f
+    /** A pull with nothing to do (no forward page) barely moves. */
+    const val DISABLED_MAX_DP = 12f
+    const val DISABLED_FOLLOW = 0.15f
+
+    fun direction(dx: Float, dy: Float): PullDir =
+        if (abs(dx) > abs(dy)) (if (dx < 0f) PullDir.Left else PullDir.Right)
+        else (if (dy > 0f) PullDir.Down else PullDir.Up)
+
+    /** How far (dp) the orb is drawn from home for a finger travel of [distanceDp]. */
+    fun offset(distanceDp: Float, enabled: Boolean): Float =
+        if (enabled) min(MAX_OFFSET_DP, distanceDp * FOLLOW) else min(DISABLED_MAX_DP, distanceDp * DISABLED_FOLLOW)
+
+    fun armed(distanceDp: Float, enabled: Boolean): Boolean = enabled && distanceDp >= ARM_DP
+}
+
+/** The orb's distance from the screen edges, in millimetres: 1 cm top/bottom, 2 cm at the side. */
+object OrbMargins {
+    const val SIDE_MM = 20f
+    const val VERTICAL_MM = 10f
+
+    fun mmToPx(mm: Float, dpi: Float): Float = mm / 25.4f * dpi
+}

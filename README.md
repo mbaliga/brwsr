@@ -6,33 +6,31 @@ A fast, minimal browser. Android first; iOS / iPadOS later.
 
 ## No chrome — one orb
 
-The only UI is a single **orb** in a corner (bottom-right by default). It shows the site's
-icon, and a progress arc around its rim while a page loads.
+The only UI is a single **orb** in a corner (bottom-right by default), **1 cm** from the top/bottom
+edge and **2 cm** from the side (both adjustable in Settings, measured in real millimetres). It
+shows the site's icon, and a progress arc around its rim while a page loads.
 
-- **Drag** it anywhere — it settles into the nearest corner and remembers it.
+- **Pull** it: **left** = back, **right** = forward, **down** = reload, **up** = share. It follows
+  the finger with resistance; past the arm distance it turns violet and shows the action, which
+  fires on release. Back with no history returns to the wall of open pages; forward with no page
+  ahead barely moves.
 - **Tap** it and it opens into a **pill**: the URL field, with the orb's side becoming **Go**
-  and the far side a **☰ site menu**. Behind it, a black gradient fades from 100% at the
+  and the far side a **⋮ site menu**. Behind it, a black gradient fades from 100% at the
   pill's edge to clear.
-- **Long-press** it for your tabs.
+- **Long-press, then drag** it to move it; it settles into the nearest corner and remembers it.
 
-The site menu holds back/forward/reload/home/tabs/share, and per-site switches: **Zappr**,
+The site menu holds the tab count, and per-site switches: **Zappr**,
 **Customize**, **Nakd**, **Desktop site**, **Block ads & trackers**, **JavaScript**,
 **Pin to landing**, and **Settings**.
 
-## Landing — Top Sites
+## Landing — a wall of open pages
 
-New tabs open on a wall of the sites you visit most (pinned first; visits fade with a
-two-week half-life), each shown as a thumbnail captured from the page. Pick the arrangement
-in Settings:
-
-| Style | |
-|---|---|
-| **Curved wall** | Columns turned inward — the concave wall of old Top Sites |
-| **Flat grid** | The same wall, flat |
-| **Coverflow** | A row of cards, side cards turned toward the centre, with floor reflections |
-| **Carousel** | A ring you spin |
-
-Long-press a card to pin or remove it. The tab switcher uses the same wall.
+The landing is a wall of your open pages (thumbnails of each, refreshed while you read, and while
+the wall is up for the current tab). **Pinch** to change the density, like a photo library: fingers
+together = more, smaller pages (up to 6 per row); apart = fewer, larger (down to 1). Tap a page to open
+it; the ✕ closes it. Type an address in the pill to open a new tab. With nothing open, the landing
+falls back to **Top Sites** (pinned first; visits fade with a two-week half-life), in the
+arrangement chosen in Settings (curved wall, flat grid, coverflow, carousel).
 
 ## Ad blocking, to the max
 
