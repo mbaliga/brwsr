@@ -166,7 +166,7 @@ fun BrwsrScreen(browser: Browser, actions: ScreenActions) {
         }
 
         // The orb.
-        val insets = rememberOrbInsets(settings.orbSideMm, settings.orbVerticalMm)
+        val insets = rememberOrbInsets(settings.orbInsetDp)
         if (!expanded && !browser.zappr.active && overlay == Overlay.None) {
             val host = tab?.pageHost
             Orb(

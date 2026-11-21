@@ -93,12 +93,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import dev.aarso.brwsr.core.OrbMargins
 import dev.aarso.brwsr.core.OrbPull
 import dev.aarso.brwsr.core.PullDir
 import kotlin.math.abs
@@ -114,20 +112,11 @@ enum class OrbGlyph(val label: String) {
     Back("back"), Forward("forward"), Reload("reload"), Share("share"), Wall("tabs"), Go("go")
 }
 
-/** The orb's distance from the screen edges: 1 cm from the bottom (or top) and from the side by default. */
+/** The orb's distance from the screen edges: equal on the side and the bottom (or top). */
 data class OrbInsets(val side: Dp, val vertical: Dp)
 
-/** Millimetres → dp using the screen's real pixel density, so "1 cm" is 1 cm on the glass. */
 @Composable
-fun rememberOrbInsets(sideMm: Float, verticalMm: Float): OrbInsets {
-    val dm = LocalContext.current.resources.displayMetrics
-    return remember(sideMm, verticalMm, dm.xdpi, dm.ydpi, dm.density) {
-        OrbInsets(
-            (OrbMargins.mmToPx(sideMm, dm.xdpi) / dm.density).dp,
-            (OrbMargins.mmToPx(verticalMm, dm.ydpi) / dm.density).dp,
-        )
-    }
-}
+fun rememberOrbInsets(insetDp: Float): OrbInsets = remember(insetDp) { OrbInsets(insetDp.dp, insetDp.dp) }
 
 @Composable
 private fun GlyphIcon(glyph: OrbGlyph, tint: Color) {

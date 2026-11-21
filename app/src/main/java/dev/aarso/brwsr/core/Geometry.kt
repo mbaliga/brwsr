@@ -194,10 +194,9 @@ object OrbPull {
     fun armed(distanceDp: Float, enabled: Boolean): Boolean = enabled && distanceDp >= ARM_DP
 }
 
-/** The orb's distance from the screen edges, in millimetres: 1 cm from the bottom (or top) and from the side. */
+/** The orb sits the same distance from the side edge and from the bottom (or top) edge. */
 object OrbMargins {
-    const val SIDE_MM = 10f
-    const val VERTICAL_MM = 10f
-
-    fun mmToPx(mm: Float, dpi: Float): Float = mm / 25.4f * dpi
+    const val INSET_DP = 56f
+    const val MIN_DP = 24f
+    const val MAX_DP = 96f
 }

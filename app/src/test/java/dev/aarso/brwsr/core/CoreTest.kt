@@ -111,9 +111,9 @@ class CoreTest {
         assertEquals(OrbPull.DISABLED_MAX_DP, OrbPull.offset(1000f, false), 0.001f)
     }
 
-    @Test fun orbMarginsAreMillimetres() {
-        // 1 cm at 254 dpi is exactly 100 px, from the side and from the bottom alike.
-        assertEquals(100f, OrbMargins.mmToPx(OrbMargins.VERTICAL_MM, 254f), 0.01f)
-        assertEquals(100f, OrbMargins.mmToPx(OrbMargins.SIDE_MM, 254f), 0.01f)
+    @Test fun orbInsetIsOneSymmetricValue() {
+        assertTrue(OrbMargins.INSET_DP in OrbMargins.MIN_DP..OrbMargins.MAX_DP)
+        // Room for a full pull toward the near edge: the orb travels at most MAX_OFFSET_DP.
+        assertTrue(OrbMargins.INSET_DP > OrbPull.MAX_OFFSET_DP * 0.9f)
     }
 }

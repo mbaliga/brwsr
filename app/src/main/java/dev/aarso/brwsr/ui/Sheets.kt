@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.aarso.brwsr.core.WallDensity
 import dev.aarso.brwsr.core.Corner
+import dev.aarso.brwsr.core.OrbMargins
 import dev.aarso.brwsr.core.SearchEngine
 import dev.aarso.brwsr.core.WallStyle
 import dev.aarso.brwsr.data.FilterListCatalog
@@ -173,16 +174,16 @@ private fun RemovableRow(text: String, onRemove: () -> Unit) {
     }
 }
 
-/** A millimetre distance, shown in centimetres. */
+/** One distance, applied equally to the side and the bottom/top edge. */
 @Composable
-private fun MmSlider(label: String, mm: Float, range: ClosedFloatingPointRange<Float>, onChange: (Float) -> Unit) {
+private fun InsetSlider(dp: Float, onChange: (Float) -> Unit) {
     Column(Modifier.padding(horizontal = 18.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, color = Ink.Text, fontSize = 15.sp)
-            Text("%.1f cm".format(mm / 10f), color = Ink.TextDim, fontSize = 12.sp, fontFamily = Ink.Mono)
+            Text("Same on both edges", color = Ink.Text, fontSize = 15.sp)
+            Text("${dp.toInt()} dp", color = Ink.TextDim, fontSize = 12.sp, fontFamily = Ink.Mono)
         }
         Slider(
-            value = mm, onValueChange = onChange, valueRange = range,
+            value = dp, onValueChange = onChange, valueRange = OrbMargins.MIN_DP..OrbMargins.MAX_DP,
             colors = SliderDefaults.colors(thumbColor = Ink.Accent, activeTrackColor = Ink.Accent, inactiveTrackColor = Ink.Groove),
         )
     }
@@ -208,8 +209,7 @@ fun SettingsSheet(
             { settings.orbCorner = it },
         )
         SectionLabel("Orb distance from the edge")
-        MmSlider("Top and bottom", settings.orbVerticalMm, 5f..30f) { settings.orbVerticalMm = it }
-        MmSlider("Side", settings.orbSideMm, 5f..40f) { settings.orbSideMm = it }
+        InsetSlider(settings.orbInsetDp) { settings.orbInsetDp = it }
         ToggleRow("Full screen", settings.immersive, detail = "Hide the status and navigation bars") { settings.immersive = it }
 
         SectionLabel("Open pages per row")
