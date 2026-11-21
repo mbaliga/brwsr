@@ -25,7 +25,7 @@ The site menu holds the tab count, and per-site switches: **Zappr**,
 
 ## Landing — a wall of open pages
 
-The landing is a wall of your open pages (thumbnails of each, refreshed while you read, and while
+The landing is a wall of your open pages, edge to edge: a flush grid with no gaps or rounded corners, each page's address on a gradient along its bottom (thumbnails of each, refreshed while you read, and while
 the wall is up for the current tab). **Pinch** to change the density, like a photo library: fingers
 together = more, smaller pages (up to 6 per row); apart = fewer, larger (down to 1). Tap a page to open
 it; the ✕ closes it. Type an address in the pill to open a new tab. With nothing open, the landing

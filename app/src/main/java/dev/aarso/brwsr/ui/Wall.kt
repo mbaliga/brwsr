@@ -13,6 +13,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -197,20 +200,23 @@ private fun GridWall(
             else -> 4
         }.coerceAtMost(maxOf(items.size, 1))
         val dense = cols >= 5
-        val side = if (dense) 12.dp else 20.dp
-        val gap = if (curved) 4.dp else if (dense) 8.dp else 14.dp
-        val rowGap = if (dense) 10.dp else 22.dp
-        val labelH = if (dense) 0.dp else 28.dp
+        // The density wall (the landing) is edge to edge: no margins, gaps or rounded corners,
+        // with the address on a gradient along the bottom of each page.
+        val flush = colsOverride != null
+        val side = if (flush) 0.dp else if (dense) 12.dp else 20.dp
+        val gap = if (flush) 0.dp else if (curved) 4.dp else if (dense) 8.dp else 14.dp
+        val rowGap = if (flush) 0.dp else if (dense) 10.dp else 22.dp
+        val labelH = if (flush || dense) 0.dp else 28.dp
         // Centre the wall vertically when it is shorter than the screen (the common case).
         val cardW = (maxWidth - side * 2 - gap * (cols - 1)) / cols
         val rowH = cardW / dev.aarso.brwsr.web.Browser.CARD_ASPECT + labelH
         val rows = (items.size + cols - 1) / cols
         val content = rowH * rows + rowGap * (rows - 1).coerceAtLeast(0)
-        val top = ((maxHeight - content) / 2 - 24.dp).coerceAtLeast(76.dp)
+        val top = if (flush) 0.dp else ((maxHeight - content) / 2 - 24.dp).coerceAtLeast(76.dp)
         LazyVerticalGrid(
             columns = GridCells.Fixed(cols),
-            modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
-            contentPadding = PaddingValues(start = side, end = side, top = top, bottom = 120.dp),
+            modifier = Modifier.fillMaxSize().windowInsetsPadding(if (flush) WindowInsets.statusBars else WindowInsets.safeDrawing),
+            contentPadding = PaddingValues(start = side, end = side, top = top, bottom = if (flush) 0.dp else 120.dp),
             horizontalArrangement = Arrangement.spacedBy(gap),
             verticalArrangement = Arrangement.spacedBy(rowGap),
         ) {
@@ -231,8 +237,8 @@ private fun GridWall(
                         }
                     },
                 ) {
-                    Card(item, onOpen, actions, onClose, Modifier.fillMaxWidth())
-                    if (!dense) Text(
+                    Card(item, onOpen, actions, onClose, Modifier.fillMaxWidth(), flush = flush, dense = dense)
+                    if (!dense && !flush) Text(
                         item.title, color = Ink.Text.copy(alpha = .78f), fontSize = 12.sp, fontWeight = FontWeight.Medium,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth().padding(top = 9.dp, start = 2.dp, end = 2.dp),
@@ -252,9 +258,11 @@ private fun Card(
     onClose: ((WallItem) -> Unit)?,
     modifier: Modifier = Modifier,
     reflect: Boolean = false,
+    flush: Boolean = false,
+    dense: Boolean = false,
 ) {
     var menu by remember { mutableStateOf(false) }
-    val shape = RoundedCornerShape(10.dp)
+    val shape = if (flush) RectangleShape else RoundedCornerShape(10.dp)
     Box(modifier) {
         Column {
             Box(
@@ -263,14 +271,20 @@ private fun Card(
                     .aspectRatio(dev.aarso.brwsr.web.Browser.CARD_ASPECT)
                     .clip(shape)
                     .background(Ink.Raised)
-                    .border(
-                        if (item.highlighted) 2.dp else 1.dp,
-                        if (item.highlighted) SolidColor(Ink.Accent)
-                        else Brush.verticalGradient(listOf(Color(0x38FFFFFF), Color(0x0DFFFFFF))),
-                        shape,
+                    .then(
+                        if (flush && !item.highlighted) Modifier
+                        else Modifier.border(
+                            if (item.highlighted) 2.dp else 1.dp,
+                            if (item.highlighted) SolidColor(Ink.Accent)
+                            else Brush.verticalGradient(listOf(Color(0x38FFFFFF), Color(0x0DFFFFFF))),
+                            shape,
+                        ),
                     )
                     .combinedClickable(onClick = { onOpen(item) }, onLongClick = { if (actions(item).isNotEmpty()) menu = true }),
-            ) { CardFace(item) }
+            ) {
+                CardFace(item)
+                if (flush) AddressBar(item, dense)
+            }
             if (reflect) {
                 // A floor reflection: the card mirrored and fading into the dark.
                 Box(
@@ -297,7 +311,7 @@ private fun Card(
         }
         if (onClose != null) {
             Box(
-                Modifier.align(Alignment.TopEnd).offset(6.dp, (-6).dp).size(26.dp).clip(CircleShape)
+                Modifier.align(Alignment.TopEnd).offset(if (flush) (-6).dp else 6.dp, if (flush) 6.dp else (-6).dp).size(26.dp).clip(CircleShape)
                     .background(Ink.SurfaceHigh).border(1.dp, Ink.Rim, CircleShape).clickable { onClose(item) },
                 contentAlignment = Alignment.Center,
             ) { Icon(Icons.Filled.Close, null, tint = Ink.Text, modifier = Modifier.size(14.dp)) }
@@ -307,6 +321,24 @@ private fun Card(
                 DropdownMenuItem(text = { Text(a.label) }, onClick = { menu = false; a.run() })
             }
         }
+    }
+}
+
+/** The page's address on a black gradient along the bottom of its tile. */
+@Composable
+private fun BoxScope.AddressBar(item: WallItem, dense: Boolean) {
+    Box(
+        Modifier
+            .align(Alignment.BottomStart)
+            .fillMaxWidth()
+            .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .85f))))
+            .padding(start = 8.dp, end = 8.dp, top = if (dense) 14.dp else 26.dp, bottom = if (dense) 4.dp else 8.dp),
+    ) {
+        Text(
+            item.subtitle.ifBlank { item.title },
+            color = Ink.Text, fontSize = if (dense) 9.sp else 12.sp, fontFamily = Ink.Mono, fontWeight = FontWeight.Medium,
+            maxLines = 1, overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
