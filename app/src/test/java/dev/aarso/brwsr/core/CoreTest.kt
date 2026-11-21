@@ -112,8 +112,8 @@ class CoreTest {
     }
 
     @Test fun orbMarginsAreMillimetres() {
-        // 1 cm at 254 dpi is exactly 100 px; 2 cm is 200.
+        // 1 cm at 254 dpi is exactly 100 px, from the side and from the bottom alike.
         assertEquals(100f, OrbMargins.mmToPx(OrbMargins.VERTICAL_MM, 254f), 0.01f)
-        assertEquals(200f, OrbMargins.mmToPx(OrbMargins.SIDE_MM, 254f), 0.01f)
+        assertEquals(100f, OrbMargins.mmToPx(OrbMargins.SIDE_MM, 254f), 0.01f)
     }
 }

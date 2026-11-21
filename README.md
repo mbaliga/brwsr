@@ -6,8 +6,8 @@ A fast, minimal browser. Android first; iOS / iPadOS later.
 
 ## No chrome — one orb
 
-The only UI is a single **orb** in a corner (bottom-right by default), **1 cm** from the top/bottom
-edge and **2 cm** from the side (both adjustable in Settings, measured in real millimetres). It
+The only UI is a single **orb** in a corner (bottom-right by default), **1 cm** from the bottom
+(or top) edge and **1 cm** from the side edge (both adjustable in Settings, measured in real millimetres). It
 shows the site's icon, and a progress arc around its rim while a page loads.
 
 - **Pull** it: **left** = back, **right** = forward, **down** = reload, **up** = share. It follows

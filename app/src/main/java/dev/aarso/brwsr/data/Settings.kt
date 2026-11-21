@@ -24,7 +24,7 @@ class Settings(context: Context) {
     var wallStyle by enumPref("wallStyle", WallStyle.Curved)
     var searchEngine by enumPref("searchEngine", SearchEngine.DuckDuckGo)
     var immersive by boolPref("immersive", false)
-    /** Orb distance from the edges, in millimetres: 1 cm top/bottom, 2 cm at the side. */
+    /** Orb distance from the edges, in millimetres: 1 cm from the bottom (or top) and from the side. */
     var orbSideMm by floatPref("orbSideMm", OrbMargins.SIDE_MM)
     var orbVerticalMm by floatPref("orbVerticalMm", OrbMargins.VERTICAL_MM)
     /** Landing wall density (columns of open tabs), changed by pinching the wall. */
