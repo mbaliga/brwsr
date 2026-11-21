@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity(), BrowserHost {
         if (CrashRecovery.maybeShowRecovery(this, appLabel = "brwsr")) return
         enableEdgeToEdge()
         val app = application as BrwsrApp
-        val b = Browser(this, app.settings, app.rules, app.topSites, app.filters, lifecycleScope)
+        val b = Browser(this, app.settings, app.rules, app.topSites, app.history, app.filters, lifecycleScope)
         b.host = this
         browser = b
         b.restore(app.settings.restoreUrls.lines().filter { it.isNotBlank() })
@@ -158,5 +158,6 @@ class MainActivity : ComponentActivity(), BrowserHost {
         WebStorage.getInstance().deleteAllData()
         b.tabs.forEach { it.webView.clearCache(true); it.webView.clearHistory() }
         (application as BrwsrApp).topSites.clearAll()
+        (application as BrwsrApp).history.clear()
     }
 }

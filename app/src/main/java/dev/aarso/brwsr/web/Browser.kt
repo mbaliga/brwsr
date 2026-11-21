@@ -37,7 +37,9 @@ import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import dev.aarso.brwsr.adblock.FilterLists
 import dev.aarso.brwsr.core.Hosts
+import dev.aarso.brwsr.core.OmniIndex
 import dev.aarso.brwsr.core.UrlInput
+import dev.aarso.brwsr.data.History
 import dev.aarso.brwsr.data.Settings
 import dev.aarso.brwsr.data.SiteRule
 import dev.aarso.brwsr.data.SiteRules
@@ -75,6 +77,7 @@ class Browser(
     val settings: Settings,
     val rules: SiteRules,
     val topSites: TopSites,
+    val history: History,
     val filters: FilterLists,
     private val scope: CoroutineScope,
 ) {
@@ -148,10 +151,24 @@ class Browser(
 
     fun showPage() { current?.let { if (it.url != null) it.landing = false } }
 
-    fun submit(input: String) {
+    /** An open page showing exactly this address, if any. */
+    fun findOpen(url: String): Tab? {
+        val k = OmniIndex.key(url)
+        return tabs.firstOrNull { t -> t.url?.let { OmniIndex.key(it) == k } == true }
+    }
+
+    /**
+     * Opens whatever was typed. An address that is already open switches to that page instead of
+     * loading a duplicate; from the wall, anything else opens as a new page so no open page is replaced.
+     */
+    fun submit(input: String, newPageFromWall: Boolean = false) {
         val url = UrlInput.resolve(input, settings.searchEngine)
         if (url.isEmpty()) return
-        val t = current ?: newTab()
+        findOpen(url)?.let { hit ->
+            if (hit === current && !hit.landing) { reload(); return }
+            select(hit); showPage(); return
+        }
+        val t = if (newPageFromWall && current?.url != null) newTab() else current ?: newTab()
         load(t, url)
     }
 
@@ -463,6 +480,7 @@ class Browser(
             if (t.lastRecorded != url && url.startsWith("http")) {
                 t.lastRecorded = url
                 topSites.recordVisit(url, view.title)
+                history.record(url, view.title)
             }
             main.postDelayed({ if (current === t && !t.landing && t.progress >= 100) captureThumb(t) }, 1500)
         }
@@ -497,7 +515,7 @@ class Browser(
 
         override fun onReceivedTitle(view: WebView, title: String?) {
             t.title = title.orEmpty()
-            t.url?.let { topSites.updateTitle(it, title) }
+            t.url?.let { topSites.updateTitle(it, title); history.updateTitle(it, title) }
         }
 
         override fun onReceivedIcon(view: WebView, icon: Bitmap) {

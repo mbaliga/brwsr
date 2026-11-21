@@ -20,6 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import dev.aarso.brwsr.core.OmniEntry
+import dev.aarso.brwsr.core.OmniIndex
+import dev.aarso.brwsr.core.OmniKind
 import dev.aarso.brwsr.core.PullDir
 import dev.aarso.brwsr.core.UrlInput
 import dev.aarso.brwsr.core.WallDensity
@@ -208,16 +211,18 @@ fun BrwsrScreen(browser: Browser, actions: ScreenActions) {
                 initialText = if (onPage) tab?.url.orEmpty() else "",
                 suggestions = { q ->
                     if (q.isBlank() || (onPage && q == tab?.url)) emptyList()
-                    else browser.topSites.ranked(200).asSequence()
-                        .filter { it.host.contains(q, true) || it.title.contains(q, true) }
-                        .take(5).map { it.title to it.url }.toList()
+                    else {
+                        val open = browser.tabs.filter { it !== tab || !onPage }.mapNotNull { t ->
+                            t.url?.let { OmniEntry(it, t.title, OmniKind.Open) }
+                        }
+                        OmniIndex.search(q, open, browser.history.entries(), System.currentTimeMillis())
+                            .map { it.title.ifBlank { UrlInput.pretty(it.url) } to it.url }
+                    }
                 },
                 menuOpen = menuOpen,
                 onGo = { text ->
                     collapse()
-                    // From the wall, a typed address opens a new tab rather than replacing an open page.
-                    if (!onPage && tab?.url != null) browser.newTab()
-                    browser.submit(text)
+                    browser.submit(text, newPageFromWall = !onPage)
                 },
                 onMenu = { menuOpen = !menuOpen },
                 onDismiss = ::collapse,
