@@ -114,7 +114,7 @@ enum class OrbGlyph(val label: String) {
     Back("back"), Forward("forward"), Reload("reload"), Share("share"), Wall("tabs"), Go("go")
 }
 
-/** The orb's distance from the screen edges: 1 cm top/bottom, 2 cm at the side by default. */
+/** The orb's distance from the screen edges: 1 cm from the bottom (or top) and from the side by default. */
 data class OrbInsets(val side: Dp, val vertical: Dp)
 
 /** Millimetres → dp using the screen's real pixel density, so "1 cm" is 1 cm on the glass. */
