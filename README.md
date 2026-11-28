@@ -137,7 +137,7 @@ CI builds a debug APK on every push and publishes `main` to the **brwsr-latest**
 | `…/ui/` | Orb & pill, site menu, wall, puck, Zappr bar, sheets |
 | `app/src/main/assets/js/` | `page.js` (document-start: cosmetic CSS, zaps, CSS, Nakd, GPC), `zappr.js`, `desktop.js` |
 | `art/` | App icon source + generator |
-| `shared-libraries/` | Submodule — `dev.aarso:crash-recovery` |
+| `shared-libraries/` | Submodule — `com.asystemofcells:crash-recovery` |
 
 ## Icon
 

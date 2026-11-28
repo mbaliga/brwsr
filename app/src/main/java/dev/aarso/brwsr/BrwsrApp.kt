@@ -5,7 +5,7 @@ import dev.aarso.brwsr.adblock.FilterLists
 import dev.aarso.brwsr.data.Settings
 import dev.aarso.brwsr.data.SiteRules
 import dev.aarso.brwsr.data.TopSites
-import dev.aarso.crashrecovery.CrashRecovery
+import com.asystemofcells.crashrecovery.CrashRecovery
 import kotlinx.coroutines.MainScope
 
 /** App-lifetime state: preferences, site rules, top sites and the filter engine. */

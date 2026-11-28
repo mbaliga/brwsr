@@ -24,7 +24,7 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-compose-material-icons = { group = "androidx.compose.material", name = "material-icons-core" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
-crash-recovery = { group = "dev.aarso", name = "crash-recovery", version = "1.4.0" }
+crash-recovery = { group = "com.asystemofcells", name = "crash-recovery", version = "1.4.0" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]

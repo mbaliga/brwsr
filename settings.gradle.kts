@@ -25,7 +25,7 @@ dependencyResolutionManagement {
 rootProject.name = "brwsr"
 include(":app")
 
-// The constellation's shared libraries (git submodule, pinned). Only dev.aarso:crash-recovery
+// The constellation's shared libraries (git submodule, pinned). Only com.asystemofcells:crash-recovery
 // is used. Gradle substitutes it from this included build — no Maven registry involved.
 // AGP LOCKSTEP (D-Q): this build must pin the same AGP as shared-libraries (8.9.1).
 includeBuild("shared-libraries")

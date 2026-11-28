@@ -26,7 +26,7 @@ import dev.aarso.brwsr.ui.BrwsrTheme
 import dev.aarso.brwsr.ui.ScreenActions
 import dev.aarso.brwsr.web.Browser
 import dev.aarso.brwsr.web.BrowserHost
-import dev.aarso.crashrecovery.CrashRecovery
+import com.asystemofcells.crashrecovery.CrashRecovery
 
 class MainActivity : ComponentActivity(), BrowserHost {
     private var browser: Browser? = null
