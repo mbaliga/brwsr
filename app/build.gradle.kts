@@ -16,14 +16,27 @@ android {
         versionName = "0.1.0"
     }
 
+    // Release signing comes from the environment only (CI secrets / your shell); never from the repo.
+    // Without BRWSR_KEYSTORE_PATH the release build falls back to the debug key so it stays
+    // installable for testing. That fallback is NOT uploadable to Play.
+    val ksPath = System.getenv("BRWSR_KEYSTORE_PATH")
+    signingConfigs {
+        if (!ksPath.isNullOrBlank()) {
+            create("upload") {
+                storeFile = file(ksPath)
+                storePassword = System.getenv("BRWSR_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("BRWSR_KEY_ALIAS")
+                keyPassword = System.getenv("BRWSR_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // No release keystore in this repo yet: sign with the debug key so the release
-            // APK is installable for testing. Replace before any store upload.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("upload") ?: signingConfigs.getByName("debug")
         }
     }
 

@@ -1,0 +1,106 @@
+name: Release (signed AAB)
+
+# Builds the Play bundle (AAB) and a signed APK for brwsr.
+# Run it by hand (Actions -> Release -> Run workflow) or push a tag like v0.1.0.
+# It never uploads to Play; it produces files you download and upload yourself.
+#
+# Secrets (repo Settings -> Secrets and variables -> Actions):
+#   BRWSR_UPLOAD_KEYSTORE_B64       base64 of the upload keystore, ONE line (base64 -i FILE | tr -d '\n')
+#   BRWSR_UPLOAD_KEYSTORE_PASSWORD
+#   BRWSR_UPLOAD_KEY_ALIAS
+#   BRWSR_UPLOAD_KEY_PASSWORD
+#
+# The release build is minified and shrunk (R8). CI so far only builds debug, so the first
+# run of this is also the first R8 build; test the resulting APK before trusting it.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check signing secrets first (fail fast, before any build)
+        env:
+          KS_B64: ${{ secrets.BRWSR_UPLOAD_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.BRWSR_UPLOAD_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.BRWSR_UPLOAD_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.BRWSR_UPLOAD_KEY_PASSWORD }}
+        run: |
+          missing=""
+          [ -n "$KS_B64" ]   || missing="$missing BRWSR_UPLOAD_KEYSTORE_B64"
+          [ -n "$KS_PASS" ]  || missing="$missing BRWSR_UPLOAD_KEYSTORE_PASSWORD"
+          [ -n "$KEY_ALIAS" ]|| missing="$missing BRWSR_UPLOAD_KEY_ALIAS"
+          [ -n "$KEY_PASS" ] || missing="$missing BRWSR_UPLOAD_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+
+      - name: Set up Android SDK
+        # platform-tools only: the action's default list asks for the legacy 'tools' package.
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+
+      - name: Install platform + build-tools
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Decode keystore
+        env:
+          KS_B64: ${{ secrets.BRWSR_UPLOAD_KEYSTORE_B64 }}
+        run: |
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          test -s "$RUNNER_TEMP/upload.jks" || { echo "::error::keystore decoded to an empty file"; exit 1; }
+
+      - name: Build signed AAB and APK
+        env:
+          BRWSR_KEYSTORE_PATH: ${{ runner.temp }}/upload.jks
+          BRWSR_KEYSTORE_PASSWORD: ${{ secrets.BRWSR_UPLOAD_KEYSTORE_PASSWORD }}
+          BRWSR_KEY_ALIAS: ${{ secrets.BRWSR_UPLOAD_KEY_ALIAS }}
+          BRWSR_KEY_PASSWORD: ${{ secrets.BRWSR_UPLOAD_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon :app:bundleRelease :app:assembleRelease --console=plain
+
+      - name: Verify the bundle is signed with the upload key and record fingerprints
+        run: |
+          aab=$(ls app/build/outputs/bundle/release/*.aab)
+          echo "AAB: $aab"
+          # No -strict: a normal upload key is self-signed and -strict rejects that.
+          jarsigner -verify "$aab" | tail -3
+          keytool -printcert -jarfile "$aab" | tee "$RUNNER_TEMP/cert.txt" | grep -E "Owner|SHA256"
+          # The debug key's owner is "Android Debug"; fail if the fallback signing slipped in.
+          if grep -q "Android Debug" "$RUNNER_TEMP/cert.txt"; then
+            echo "::error::bundle is signed with the debug key, not the upload key"; exit 1
+          fi
+          sha256sum "$aab" | tee "$aab.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brwsr-release
+          path: |
+            app/build/outputs/bundle/release/*.aab
+            app/build/outputs/bundle/release/*.sha256
+            app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
